@@ -5,10 +5,10 @@ local SpeedConfig = {
 	GAMEPASS_ID = 0, -- TODO: paste your existing 2x speed game pass ID here
 	PRICE = 3, -- shown under the button; keep in sync with the pass price
 
-	-- Image asset IDs (upload assets/speed-ui/*.png in Studio's Asset Manager)
+	-- Image asset IDs
 	IMAGES = {
-		Shoe = 0, -- speed_shoe.png
-		Shine = 0, -- speed_shine.png
+		Shoe = 0, -- your existing shoe icon (e.g. 1234567 from rbxassetid://1234567)
+		Shine = 0, -- upload assets/speed-ui/speed_shine.png
 	},
 }
 

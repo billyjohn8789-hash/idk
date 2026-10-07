@@ -1,7 +1,7 @@
 # 2x Speed button images
 
-1. In Roblox Studio open **Window > Asset Manager > Bulk Import** and pick
-   `speed_shoe.png` and `speed_shine.png`.
-2. Right-click each > **Copy Asset ID** and paste into `IMAGES` in `src/shared/SpeedConfig.luau`.
+`speed_shine.png` is the spinning shine behind the shoe. Upload it in Roblox Studio
+(**Window > Asset Manager > Bulk Import**), right-click it > **Copy Asset ID**, and paste
+the number into `IMAGES.Shine` in `src/shared/SpeedConfig.luau`.
 
-`_preview.png` shows roughly how the button looks in game.
+The shoe uses your game's existing shoe icon: put its asset ID in `IMAGES.Shoe`.
