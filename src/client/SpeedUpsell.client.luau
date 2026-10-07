@@ -17,6 +17,7 @@ local logRemote = remotes:WaitForChild("LogUpsell") :: RemoteEvent
 
 local player = Players.LocalPlayer
 local PRICE_TEXT = utf8.char(0xE002) .. tostring(SpeedConfig.PRICE) -- Robux icon + price
+local IMAGES = SpeedConfig.IMAGES
 
 local GOLD = Color3.fromRGB(255, 200, 40)
 local ORANGE = Color3.fromRGB(255, 120, 20)
@@ -31,50 +32,71 @@ local function addCorner(parent: Instance, radius: number)
 	corner.Parent = parent
 end
 
-local function addStroke(parent: Instance, color: Color3, thickness: number)
+local function addBorder(parent: Instance, color: Color3, thickness: number)
 	local stroke = Instance.new("UIStroke")
+	stroke.Name = "Border"
 	stroke.Color = color
 	stroke.Thickness = thickness
 	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	stroke.Parent = parent
 end
 
-local function makeText(
-	class: "TextLabel" | "TextButton",
-	parent: Instance,
-	text: string,
-	position: UDim2,
-	size: UDim2,
-	maxTextSize: number
-): TextLabel | TextButton
-	local obj = Instance.new(class) :: any
-	obj.BackgroundTransparency = 1
-	obj.Text = text
-	obj.Font = Enum.Font.FredokaOne
-	obj.TextColor3 = Color3.new(1, 1, 1)
-	obj.TextScaled = true
-	obj.AnchorPoint = Vector2.new(0.5, 0.5)
-	obj.Position = position
-	obj.Size = size
+local function makeText(parent: Instance, text: string, position: UDim2, size: UDim2, maxTextSize: number): TextLabel
+	local label = Instance.new("TextLabel")
+	label.BackgroundTransparency = 1
+	label.Text = text
+	label.Font = Enum.Font.FredokaOne
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.TextScaled = true
+	label.AnchorPoint = Vector2.new(0.5, 0.5)
+	label.Position = position
+	label.Size = size
 	local limit = Instance.new("UITextSizeConstraint")
 	limit.MaxTextSize = maxTextSize
-	limit.Parent = obj
+	limit.Parent = label
 	local outline = Instance.new("UIStroke")
 	outline.Thickness = 2
 	outline.Color = Color3.new(0, 0, 0)
-	outline.Parent = obj
-	obj.Parent = parent
-	return obj
+	outline.Parent = label
+	label.Parent = parent
+	return label
 end
 
-local function makeButton(parent: Instance, text: string, color: Color3, position: UDim2, size: UDim2): TextButton
-	local button = makeText("TextButton", parent, text, position, size, 32) :: TextButton
-	button.BackgroundTransparency = 0
+-- Swaps the code-drawn look for the Figma-designed image when its asset ID is set.
+-- Returns true if the image skin was applied.
+local function applySkin(obj: ImageLabel | ImageButton, imageId: number): boolean
+	if imageId == 0 then
+		return false
+	end
+	obj.Image = "rbxassetid://" .. imageId
+	obj.ScaleType = Enum.ScaleType.Stretch
+	obj.BackgroundTransparency = 1
+	for _, child in obj:GetChildren() do
+		if child.Name == "Border" or child:IsA("UIGradient") or child:IsA("UICorner") then
+			child:Destroy()
+		end
+	end
+	return true
+end
+
+local function makeButton(
+	parent: Instance,
+	color: Color3,
+	position: UDim2,
+	size: UDim2,
+	imageId: number
+): (ImageButton, TextLabel)
+	local button = Instance.new("ImageButton")
+	button.AnchorPoint = Vector2.new(0.5, 0.5)
+	button.Position = position
+	button.Size = size
 	button.BackgroundColor3 = color
-	button.AutoButtonColor = true
 	addCorner(button, 0.25)
-	addStroke(button, Color3.new(0, 0, 0), 3)
-	return button
+	addBorder(button, Color3.new(0, 0, 0), 3)
+	applySkin(button, imageId)
+	local label = makeText(button, "", UDim2.fromScale(0.5, 0.5), UDim2.fromScale(0.9, 0.7), 32)
+	button.Parent = parent
+	return button, label
 end
 
 -- Build UI -----------------------------------------------------------------
@@ -96,32 +118,39 @@ hudButton.BackgroundColor3 = Color3.new(1, 1, 1)
 hudButton.Visible = false
 hudButton.Parent = gui
 addCorner(hudButton, 0.2)
-addStroke(hudButton, Color3.new(0, 0, 0), 3)
-
-local hudAspect = Instance.new("UIAspectRatioConstraint")
-hudAspect.AspectRatio = 1
-hudAspect.Parent = hudButton
+addBorder(hudButton, Color3.new(0, 0, 0), 3)
 
 local hudGradient = Instance.new("UIGradient")
 hudGradient.Color = ColorSequence.new(GOLD, ORANGE)
 hudGradient.Rotation = 90
 hudGradient.Parent = hudButton
 
+local hudAspect = Instance.new("UIAspectRatioConstraint")
+hudAspect.AspectRatio = 1
+hudAspect.Parent = hudButton
+
 local hudScale = Instance.new("UIScale")
 hudScale.Parent = hudButton
 
-makeText("TextLabel", hudButton, "⚡", UDim2.fromScale(0.5, 0.3), UDim2.fromScale(0.6, 0.4), 60)
-makeText("TextLabel", hudButton, "2x SPEED", UDim2.fromScale(0.5, 0.64), UDim2.fromScale(0.9, 0.22), 24)
+-- The Figma HUD image already has the lightning bolt drawn in.
+if not applySkin(hudButton, IMAGES.HudButton) then
+	makeText(hudButton, "⚡", UDim2.fromScale(0.5, 0.3), UDim2.fromScale(0.6, 0.4), 60)
+end
+makeText(hudButton, "2x SPEED", UDim2.fromScale(0.5, 0.64), UDim2.fromScale(0.9, 0.22), 24)
 
-local priceTag = makeText("TextLabel", hudButton, PRICE_TEXT, UDim2.fromScale(0.85, 0.05), UDim2.fromScale(0.55, 0.28), 22)
-priceTag.BackgroundTransparency = 0
-priceTag.BackgroundColor3 = GREEN
+local priceTag = Instance.new("ImageLabel")
+priceTag.AnchorPoint = Vector2.new(0.5, 0.5)
+priceTag.Position = UDim2.fromScale(0.85, 0.05)
+priceTag.Size = UDim2.fromScale(0.55, 0.28)
 priceTag.Rotation = 12
+priceTag.BackgroundColor3 = GREEN
+priceTag.Parent = hudButton
 addCorner(priceTag, 0.4)
-addStroke(priceTag, Color3.new(0, 0, 0), 2)
+addBorder(priceTag, Color3.new(0, 0, 0), 2)
+applySkin(priceTag, IMAGES.PriceTag)
+makeText(priceTag, PRICE_TEXT, UDim2.fromScale(0.5, 0.5), UDim2.fromScale(0.85, 0.75), 22)
 
-local trialTimer =
-	makeText("TextLabel", hudButton, "", UDim2.fromScale(0.5, 1.2), UDim2.fromScale(1.4, 0.25), 24) :: TextLabel
+local trialTimer = makeText(hudButton, "", UDim2.fromScale(0.5, 1.2), UDim2.fromScale(1.4, 0.25), 24)
 trialTimer.TextColor3 = GOLD
 trialTimer.Visible = false
 
@@ -133,7 +162,7 @@ TweenService:Create(
 ):Play()
 
 -- Popup offer (centre of screen)
-local popup = Instance.new("Frame")
+local popup = Instance.new("ImageLabel")
 popup.Name = "SpeedOffer"
 popup.AnchorPoint = Vector2.new(0.5, 0.5)
 popup.Position = UDim2.fromScale(0.5, 0.5)
@@ -142,7 +171,8 @@ popup.BackgroundColor3 = DARK
 popup.Visible = false
 popup.Parent = gui
 addCorner(popup, 0.08)
-addStroke(popup, GOLD, 4)
+addBorder(popup, GOLD, 4)
+applySkin(popup, IMAGES.Popup)
 
 local popupAspect = Instance.new("UIAspectRatioConstraint")
 popupAspect.AspectRatio = 1.5
@@ -151,14 +181,28 @@ popupAspect.Parent = popup
 local popupScale = Instance.new("UIScale")
 popupScale.Parent = popup
 
-local titleLabel =
-	makeText("TextLabel", popup, "", UDim2.fromScale(0.5, 0.17), UDim2.fromScale(0.85, 0.2), 48) :: TextLabel
+local titleLabel = makeText(popup, "", UDim2.fromScale(0.5, 0.17), UDim2.fromScale(0.85, 0.2), 48)
 titleLabel.TextColor3 = GOLD
-local bodyLabel = makeText("TextLabel", popup, "", UDim2.fromScale(0.5, 0.38), UDim2.fromScale(0.85, 0.16), 28) :: TextLabel
+local bodyLabel = makeText(popup, "", UDim2.fromScale(0.5, 0.38), UDim2.fromScale(0.85, 0.16), 28)
 
-local buyButton = makeButton(popup, "", GREEN, UDim2.fromScale(0.5, 0.6), UDim2.fromScale(0.7, 0.2))
-local trialButton = makeButton(popup, "", Color3.fromRGB(70, 120, 255), UDim2.fromScale(0.5, 0.83), UDim2.fromScale(0.55, 0.14))
-local closeButton = makeButton(popup, "X", Color3.fromRGB(220, 60, 60), UDim2.fromScale(0.97, 0.03), UDim2.fromScale(0.09, 0.13))
+local buyButton, buyLabel =
+	makeButton(popup, GREEN, UDim2.fromScale(0.5, 0.6), UDim2.fromScale(0.7, 0.2), IMAGES.BuyButton)
+local trialButton, trialLabel = makeButton(
+	popup,
+	Color3.fromRGB(70, 120, 255),
+	UDim2.fromScale(0.5, 0.83),
+	UDim2.fromScale(0.55, 0.14),
+	IMAGES.TrialButton
+)
+local closeButton, closeLabel = makeButton(
+	popup,
+	Color3.fromRGB(220, 60, 60),
+	UDim2.fromScale(0.97, 0.03),
+	UDim2.fromScale(0.09, 0.135),
+	IMAGES.CloseButton
+)
+-- The Figma close image already has the X drawn in.
+closeLabel.Text = if IMAGES.CloseButton == 0 then "X" else ""
 
 -- State --------------------------------------------------------------------
 
@@ -198,8 +242,8 @@ end
 local function showPopup(title: string, body: string, eventName: string)
 	titleLabel.Text = title
 	bodyLabel.Text = body
-	buyButton.Text = "BUY 2x SPEED  " .. PRICE_TEXT
-	trialButton.Text = `TRY FREE ({SpeedConfig.TRIAL_SECONDS}s)`
+	buyLabel.Text = "BUY 2x SPEED  " .. PRICE_TEXT
+	trialLabel.Text = `TRY FREE ({SpeedConfig.TRIAL_SECONDS}s)`
 	trialButton.Visible = trialAvailable()
 
 	popupsShown += 1

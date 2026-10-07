@@ -30,6 +30,17 @@ local SpeedConfig = {
 		ThornwoodForest = "Crystal Highlands",
 	} :: { [string]: string },
 
+	-- Image asset IDs for the Figma-designed UI (upload assets/speed-ui/*.png).
+	-- Leave any at 0 to use the built-in code-drawn style for that piece.
+	IMAGES = {
+		HudButton = 0, -- speed_hud_bg.png
+		Popup = 0, -- speed_popup_bg.png
+		BuyButton = 0, -- speed_buy_btn.png
+		TrialButton = 0, -- speed_trial_btn.png
+		CloseButton = 0, -- speed_close_btn.png
+		PriceTag = 0, -- speed_price_tag.png
+	},
+
 	REMOTES_FOLDER = "SpeedRemotes",
 }
 
