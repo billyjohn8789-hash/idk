@@ -3,14 +3,15 @@
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {
-      "SpeedConfig": { "$path": "src/shared/SpeedConfig.luau" }
-    },
-    "ServerScriptService": {
-      "SpeedPass": { "$path": "src/server/SpeedPass.server.luau" }
+      "SpeedConfig": {
+        "$path": "src/shared/SpeedConfig.luau"
+      }
     },
     "StarterPlayer": {
       "StarterPlayerScripts": {
-        "SpeedUpsell": { "$path": "src/client/SpeedUpsell.client.luau" }
+        "SpeedShortcut": {
+          "$path": "src/client/SpeedUpsell.client.luau"
+        }
       }
     }
   }
