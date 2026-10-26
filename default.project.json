@@ -11,6 +11,9 @@
       "StarterPlayerScripts": {
         "SpeedShortcut": {
           "$path": "src/client/SpeedUpsell.client.luau"
+        },
+        "TrainRide": {
+          "$path": "src/client/TrainRide.client.luau"
         }
       }
     }
